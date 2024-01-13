@@ -1,5 +1,37 @@
 let S = 
 {
+    line: function (ax, ay, bx, by, f = 1.0)
+    {
+        let dx = bx - ax
+        let dy = by - ay
+
+        let d = Math.sqrt(dx * dx + dy * dy);
+        let p = f * d / 1000
+        let steps = Math.floor(d / 10)
+
+        // let steps = 10
+
+        // strokeWeight(1.5)
+        // stroke(100, 255)
+        // noFill()
+
+        let x = ax
+        let y = ay
+
+        beginShape();
+       
+        vertex(x, y)
+
+        for (let i = 0; i < steps; i++)
+        {   
+            x += dx / steps + randomGaussian(0, p)
+            y += dy / steps + randomGaussian(0, p)
+            vertex(x, y)
+        }
+
+        endShape()
+    },
+
     intersect_vector_vector: function(ax, ay, vax, vay, bx, by, vbx, vby)
     {
         let d = vbx * vay - vby * vax
@@ -38,8 +70,6 @@ let S =
         let x = bx + m * vbx
         let y = by + m * vby
 
-        // circle(x, y, 2)
-
         if (
             x >= min(cx, dx) && x <= max(cx, dx) && y >= min(cy, dy) && y <= max(cy, dy)
         )
@@ -58,7 +88,6 @@ let S =
 
         let start = points.shift();
         h.push(start)
-        console.log(start)
 
         let c = start;
 
@@ -95,7 +124,15 @@ let S =
 
     }, 
 
-    hatch: function (ax, ay, bx, by, cx, cy, dx, dy, r)
+    rect: function(x, y, w, h, f)
+    {
+        this.line(x, y, x + w, y, f)
+        this.line(x, y + h, x + w, y + h, f)
+        this.line(x, y, x, y + h, f)
+        this.line(x + w, y, x + w, y + h, f)
+    },
+
+    hatch: function (ax, ay, bx, by, cx, cy, dx, dy, r, s, f)
     {
         let points = this.sortClockwise([
             {x : ax, y: ay},
@@ -103,80 +140,8 @@ let S =
             {x : cx, y: cy},
             {x : dx, y: dy},
         ])
-
-
-        text('A', points[0].x - 10, points[0].y - 10)
-        text('B', points[1].x - 10, points[1].y - 10)
-        text('C', points[2].x - 10, points[2].y - 10)
-        text('D', points[3].x - 10, points[3].y - 10)
-
-        line(points[0].x, points[0].y, points[1].x, points[1].y)
-        line(points[1].x, points[1].y, points[2].x, points[2].y)
-        line(points[2].x, points[2].y, points[3].x, points[3].y)
-        line(points[3].x, points[3].y, points[0].x, points[0].y)
-
-        // line(points[0].x, points[0].y, points[2].x, points[2].y)
-        // line(points[1].x, points[1].y, points[3].x, points[3].y)
-
-        r = random() * TWO_PI
+        
         r = r % PI
-
-        // r = 0
-
-        // let eb
-        // let ee
-
-        // if (abs(by - ay) > abs(bx -ax))
-        // {
-        //     eb = min(by, ay)
-        //     ee = max(by, ay)
-        // }
-        // else
-        // {
-        //     eb = min(bx, ax)
-        //     ee = max(bx, ax)
-        // }
-
-        // let ebx = Math.min(... points.map(p => p.x))
-        // let eby = Math.min(... points.map(p => p.y))
-
-        // let eex = Math.max(... points.map(p => p.x))
-        // let eey = Math.max(... points.map(p => p.y))
-        // let eby = points[0].y
-
-        // strokeWeight(0.2)
-        // line(ebx, eby, eex, eby)
-        // line(ebx, eey, eex, eey)
-        // line(ebx, eby, ebx, eey)
-        // line(eex, eby, eex, eey)
-
-        // let eex = points[2].x
-        // let eey = points[2].y
-
-        strokeWeight(2)
-
-      
-
-        // // let ar = this.intersect_vector_vector(points[0].x, points[0].y, sin(r), cos(r), points[1].x, points[1].y, cos(r), sin(r))
-
-        // // if (ar)
-        // // {
-        // //     line(points[0].x, points[0].y, ar.x, ar.y)
-        // //     circle(ar.x, ar.y, 4)
-        // // }
-
-        // let q = atan(abs(eey - eby) / abs(eex - ebx))
-
-        console.log(r / PI)
-        // // console.log(q / PI)
-       
-        // if ((q - r) < 0)
-        // {
-        //     q += PI
-        // }
-
-        // //console.log((q - r) / PI)
-
 
         for (let p of points)
         {
@@ -184,20 +149,6 @@ let S =
         }
 
         let pcs = [...points].sort((a, b) => a.c - b.c)
-
-        let colors = 
-        [
-"rgb(255, 0, 0)",
-"rgb(255, 100, 100)",
-"rgb(255, 150, 150)",
-"rgb(255, 250, 250)",
-        ]
-
-        pcs.forEach((pcs, i) => 
-        {
-            fill(colors[i])
-            circle(pcs.x, pcs.y, 10)
-        })
 
         let ebx = pcs[0].x
         let eby = pcs[0].y
@@ -207,7 +158,7 @@ let S =
 
         let d = Math.sqrt((eby - eey) * (eby - eey) + (ebx - eex) * (ebx - eex))
 
-        let g = 7 / d
+        let g = s / d
         let vx = cos(r)
         let vy = - sin(r)
 
@@ -220,9 +171,6 @@ let S =
             vix = ebx + (eex - ebx) * i
             viy = eby + (eey - eby) * i
 
-            circle(vix, viy, 3)
-
-
             let ps = []
 
             for (let pi = 0; pi < points.length; pi++) 
@@ -234,19 +182,11 @@ let S =
                     ps.push(p)
                 }
             }
-
-            // intps.sort((a, b) => b.y - a.y)
-
+                
             if (ps.length == 2)
             {
-                line(ps[0].x, ps[0].y, ps[1].x, ps[1].y)
+                this.line(ps[0].x, ps[0].y, ps[1].x, ps[1].y, f)
             }
-            //}
-            // {
-            //     //circle(p.x, p.y, 4)
-            //     stroke(0, 40)
-            //     line(vix, viy, p.x, p.y)
-            // }
         }
     }
 }
@@ -261,27 +201,79 @@ let cy
 let dx
 let dy
 
+let rects = []
+
 function draw()
 {
-    // clear()
+    if (random() * 1000 < 800)
+    {
+        return
+    }
+
+
+    clear()
     // S.hatch(ax, ay, bx, by, cx, cy, dx, dy)
+
+    for (let rect of rects)
+    {
+
+        if (random() * 100 > 50)
+        {
+            rect.x += random() * 2 - 1
+            rect.y += random() * 2 - 1
+            rect.w += random() * 2 - 1
+            rect.h += random() * 2 - 1
+        }
+        
+
+        stroke(rect.c)
+
+        S.rect(rect.x, rect.y, rect.w, rect.h, 5)
+        // if (random() > 0.5)
+        // {
+        S.hatch(rect.x, rect.y, rect.x + rect.w, rect.y, rect.x, rect.y + rect.h, rect.x + rect.w , rect.y + rect.h, rect.r, rect.s, rect.f)
+        // }
+        // if (random() > 0.5)
+        // {
+        //     S.hatch(rect.x, rect.y, rect.x + rect.w, rect.y, rect.x, rect.y + rect.h, rect.x + rect.w , rect.y + rect.h, rect.r + 0.25 * PI, rect.s, rect.f)
+        // }
+    }
 }
 
 function setup()
 {
     createCanvas(500, 500)
 
-    ax = random() * 400 + 50 
-    ay = random() * 400 + 50 
-    bx = random() * 400 + 50 
-    by = random() * 400 + 50 
+    let colors = 
+    [
+        "#22092C",
+        "#872341",
+        "#BE3144",
+        "#F05941",
+    ]
 
-    cx = random() * 400 + 50 
-    cy = random() * 400 + 50 
-    dx = random() * 400 + 50 
-    dy = random() * 400 + 50 
+    for (let i = 0; i < 20; i++) 
+    {
 
-    S.hatch(ax, ay, bx, by, cx, cy, dx, dy)
+        x = random() * 400 + 50 
+        y = random() * 400 + 50 
+        w = random() * (100) + 10 
+        h = random() * 100 + 10 
+
+        rects.push(
+            {
+                x: x,
+                y: y,
+                w: w,
+                h: h,
+                r: random() * PI,
+                f: random() * 5 + 5,
+                s: random() * 10,
+                c: colors[random() * (colors.length - 1) | 0]
+            }
+        )
+
+    }
 }
 
 

@@ -6,8 +6,8 @@ let S =
         let dy = by - ay
 
         let d = Math.sqrt(dx * dx + dy * dy);
-        let p = f * d / 1000
-        let steps = Math.floor(d / 10)
+        let p = f * d / 150
+        let steps = 20
 
         // let steps = 10
 
@@ -24,8 +24,8 @@ let S =
 
         for (let i = 0; i < steps; i++)
         {   
-            x += dx / steps + randomGaussian(0, p)
-            y += dy / steps + randomGaussian(0, p)
+            x = ax + dx * (i / steps) + randomGaussian(0, d * 0.008)
+            y = ay + dy * (i / steps) + randomGaussian(0, d * 0.008)
             vertex(x, y)
         }
 
@@ -132,7 +132,26 @@ let S =
         this.line(x + w, y, x + w, y + h, f)
     },
 
-    hatch: function (ax, ay, bx, by, cx, cy, dx, dy, r, s, f)
+    quad: function (ax, ay, bx, by, cx, cy, dx, dy, f)
+    {
+        let points = this.sortClockwise([
+            {x : ax, y: ay},
+            {x : bx, y: by},
+            {x : cx, y: cy},
+            {x : dx, y: dy},
+        ])
+
+        for (let i = 0; i < 4; i++)
+        {
+            this.line(points[i].x, points[i].y, points[(i + 1) % 4].x, points[(i + 1 )% 4].y, f)
+        }
+
+        beginShape()
+        points.forEach(p => vertex(p.x, p.y))
+        endShape()
+    },
+
+    hatch: function (ax, ay, bx, by, cx, cy, dx, dy, r = 0, s = 1, f = 1)
     {
         let points = this.sortClockwise([
             {x : ax, y: ay},
@@ -196,84 +215,203 @@ let ay
 let bx
 let by
 
-let cx
-let cy
-let dx
-let dy
-
-let rects = []
-
 function draw()
 {
-    if (random() * 1000 < 800)
+    // clear()    
+    // circle(ax, ay, 4)
+    // circle(bx, by, 4)
+
+    // let dx = ax - bx
+    // let dy = ay - by
+
+    // line(ax, ay, bx, by)
+
+    // ax += 0.01 * dy
+    // ay -= 0.01 * dx
+
+   
+}
+
+let l = 20
+let o
+
+function Translate(c)
+{
+    if (!c.z)
     {
-        return
+        c.z = 0
+    }
+
+    return {
+        x: l * (c.x - c.y) + o.x,
+        y: 0.5 * l * (c.x + c.y - 2 * c.z) + o.y
+    }
+}
+
+function drawTile(c)
+{
+    S.quad(
+        c.x - l, c.y,
+        c.x + l, c.y,
+        c.x, c.y - 0.5 * l,
+        c.x, c.y + 0.5 * l
+        )
+}
+
+function drawCube(c, z, cc  = 1)
+{
+    let cx = c.x
+    let cy = c.y
+    c = Translate(c)
+
+    let ccl = l * cc
+
+    fill("white")
+
+
+    stroke(40)
+
+    let A = { x: c.x - ccl,     y: c.y - z * ccl }
+    let B = { x: c.x,           y: c.y - z * ccl + 0.5 * ccl}
+    let C = { x: c.x + ccl,     y: c.y - z * ccl }
+    let D = { x: c.x,           y: c.y - z * ccl - 0.5 * ccl}
+    let E = { x: c.x - ccl,     y: c.y }
+    let F = { x: c.x,           y: c.y + 0.5 * ccl }
+    let G = { x: c.x + ccl,     y: c.y }
+
+
+    S.quad(A.x, A.y, B.x, B.y, C.x, C.y, D.x, D.y)
+    S.quad(A.x, A.y, B.x, B.y, E.x, E.y, F.x, F.y)
+    S.quad(B.x, B.y, C.x, C.y, F.x, F.y, G.x, G.y)
+
+
+    stroke(200)
+    if (random() > 0.9)
+    {
+        S.hatch(A.x, A.y, B.x, B.y, C.x, C.y, D.x, D.y, atan(0.5), random() * 2 + 2, 1.5)
+    }
+    if (random() > 0.9)
+    {
+        S.hatch(A.x, A.y, B.x, B.y, C.x, C.y, D.x, D.y, - atan(0.5), random() * 2 + 2, 1.5)
     }
 
 
-    clear()
-    // S.hatch(ax, ay, bx, by, cx, cy, dx, dy)
-
-    for (let rect of rects)
+    stroke(random() * 80 + 120)
+    if (random() > 0.8)
     {
-
-        if (random() * 100 > 50)
-        {
-            rect.x += random() * 2 - 1
-            rect.y += random() * 2 - 1
-            rect.w += random() * 2 - 1
-            rect.h += random() * 2 - 1
-        }
-        
-
-        stroke(rect.c)
-
-        S.rect(rect.x, rect.y, rect.w, rect.h, 5)
-        // if (random() > 0.5)
-        // {
-        S.hatch(rect.x, rect.y, rect.x + rect.w, rect.y, rect.x, rect.y + rect.h, rect.x + rect.w , rect.y + rect.h, rect.r, rect.s, rect.f)
-        // }
-        // if (random() > 0.5)
-        // {
-        //     S.hatch(rect.x, rect.y, rect.x + rect.w, rect.y, rect.x, rect.y + rect.h, rect.x + rect.w , rect.y + rect.h, rect.r + 0.25 * PI, rect.s, rect.f)
-        // }
+        let p = random() * 10 + 2
+        S.hatch(A.x, A.y, B.x, B.y, E.x, E.y, F.x, F.y, 0.5 * PI, p, 1.1)
+        S.hatch(B.x, B.y, C.x, C.y, F.x, F.y, G.x, G.y, 0.5 * PI, p, 1.1)
     }
+    if (random() > 0.8)
+    {
+        let p = random() * 10 + 2
+        S.hatch(A.x, A.y, B.x, B.y, E.x, E.y, F.x, F.y, - atan(0.5), p, 1.6)
+        S.hatch(B.x, B.y, C.x, C.y, F.x, F.y, G.x, G.y, atan(0.5), p, 1.6)
+    }
+    // S.hatch(c.x - l * cc, c.y - z * l, c.x + l * cc, c.y - z * l, c.x, c.y - z * l - 0.5 * l * cc, c.x, c.y - z * l + 0.5 * l * cc, atan(0.5), 2, 1.5)
+    // S.hatch(c.x - l * cc, c.y - z * l, c.x - l * cc, c.y  + l * cc, c.x, c.y + 1.5 * l * cc, c.x, c.y - z * l + 0.5 * l * cc, - atan(0.5), random() * 5, 1)
+    // stroke(128)
+    // S.hatch(c.x - l * cc, c.y - z * l, c.x - l * cc, c.y  + l * cc, c.x, c.y + 1.5 * l * cc, c.x, c.y - z * l + 0.5 * l * cc, 0.5 * PI, 5, 1)
+    // S.hatch(
+    //     c.x - l * cc, c.y,
+    //     c.x - l * cc, c.y + l * cc,
+    //     c.x, c.y + 1.5 * l * cc,
+    //     c.x, c.y + 0.5 * l * cc,
+    //         0 * PI, 3, 1.3
+    //     )
+
+    
+        // textFont('Courier New', 10);
+        // fill('red')
+    // text(`(${cx},${cy})`, c.x, c.y)
 }
 
 function setup()
 {
+   
     createCanvas(500, 500)
 
-    let colors = 
-    [
-        "#22092C",
-        "#872341",
-        "#BE3144",
-        "#F05941",
-    ]
+    o  = { x: width / 2, y: height / 2}
+    // ax = random() * 450 + 50
+    // ay = random() * 450 + 50
+    // bx = random() * 450 + 50
+    // by = random() * 450 + 50
 
-    for (let i = 0; i < 20; i++) 
+    // let l = 30
+
+    // for (let j = 0; j < 2; j++)
+    // {
+    //     let x = random() * 10 | 0 + 10
+    //     let y = random() * 3 | 0
+    //     console.log(x, y)
+
+    //     let c = Translate({ x: x, y: y })
+    //     drawTile(c)
+    //     console.log(c)
+    // }
+
+    let cubes = []
+
+    stroke(200)
+    for (let i = -20; i < 20; i++)
+    {
+        for (let j = -20; j < 20; j++)
+        {
+            drawTile(Translate({ x: i, y: j}))
+        }
+    }
+
+
+    for (let i = -20; i < 20; i++)
+    {
+        for (let j = -20; j < 20; j++)
+        {
+            if (i % 3 == 0 || j % 3 == 0)
+            {
+                continue
+            }
+
+            let q = (i * i + j * j)
+            if (q == 0)
+            {
+                q = 1
+            }
+
+            let h = (noise(i , j)) * (50 / q)
+    
+            if (random() * 100 > 100 - (q))
+            {
+                h *= 2
+            }
+
+            if (random() * 100 > 100 - (q))
+            {
+                h *= 2
+            }
+
+            h = min(h, 10)
+
+
+            cubes.push({x: i, y: j, z: 0, h: h, c: max(0.4, random() * 0.9) })
+        }
+    }
+ 
+
+    cubes.sort((a, b) => (a.x + a.y) - (b.x + b.y))
+
+    let i = 0
+
+    for (let cube of cubes)
     {
 
-        x = random() * 400 + 50 
-        y = random() * 400 + 50 
-        w = random() * (100) + 10 
-        h = random() * 100 + 10 
-
-        rects.push(
-            {
-                x: x,
-                y: y,
-                w: w,
-                h: h,
-                r: random() * PI,
-                f: random() * 5 + 5,
-                s: random() * 10,
-                c: colors[random() * (colors.length - 1) | 0]
-            }
-        )
-
+        drawCube(cube, cube.h, cube.c)
+        // fill("blue")
+        // text(i, Translate(cube).x, Translate(cube).y - 5)
+        // i++
     }
+
+    
 }
 
 
@@ -301,4 +439,6 @@ function setup()
     // }
 
 // }
+
+
 

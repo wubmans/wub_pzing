@@ -1,35 +1,48 @@
 let S = 
 {
-    line: function (ax, ay, bx, by, f = 1.0)
+    line: function (ax, ay, bx, by, f = 0.0)
     {
-        let dx = bx - ax
-        let dy = by - ay
+        for (let i = 0; i < 2; i++)
+        {
+            let alpha = random() * TWO_PI
+            let beta = random() * TWO_PI
 
-        let d = Math.sqrt(dx * dx + dy * dy);
-        let p = f * d / 150
-        let steps = 20
+            let dx = bx - ax
+            let dy = by - ay
+            // ax
 
-        // let steps = 10
+            // let steps = 10
 
-        // strokeWeight(1.5)
-        // stroke(100, 255)
-        // noFill()
+            strokeWeight(1.5)
+            // stroke(100, 255)
+            // noFill()
 
-        let x = ax
-        let y = ay
+            let x = ax + sin(alpha) * f
+            let y = ay + cos(alpha) * f
 
-        beginShape();
-       
-        vertex(x, y)
+            let p = random() * 0.2 + 0.65  // tussen 65 en 85% vd lengte
+            
+            f = 0.5
 
-        for (let i = 0; i < steps; i++)
-        {   
-            x = ax + dx * (i / steps) + randomGaussian(0, d * 0.008)
-            y = ay + dy * (i / steps) + randomGaussian(0, d * 0.008)
-            vertex(x, y)
+            beginShape();
+        
+            curveVertex(ax, ay)
+            curveVertex(ax + sin(alpha) * f, ay + cos(alpha) * f)
+            curveVertex(ax + dx * p + f, ay + dy * p - f)
+            curveVertex(bx + sin(beta) * f, by + cos(beta) * f)
+            curveVertex(bx, by)
+            endShape()
         }
+        
 
-        endShape()
+        // for (let i = 0; i < steps; i++)
+        // {   
+        //     x = ax + dx * (i / steps) + randomGaussian(0, d * 0.008)
+        //     y = ay + dy * (i / steps) + randomGaussian(0, d * 0.008)
+        //     vertex(x, y)
+        // }
+
+        
     },
 
     intersect_vector_vector: function(ax, ay, vax, vay, bx, by, vbx, vby)
@@ -215,6 +228,28 @@ let ay
 let bx
 let by
 
+let grid
+
+function createGrid(x, y)
+{
+    let grid = []
+    for (let j = 0; j < y; j++)
+        {
+        for (let i = 0; i < x; i++)
+        {
+            if (!grid[i])
+            {
+                grid[i] = []
+            }
+
+            grid[i][y] = -1
+            
+        }
+    }
+
+    return grid
+}
+
 function draw()
 {
     // clear()    
@@ -232,7 +267,7 @@ function draw()
    
 }
 
-let l = 20
+let l = 30
 let o
 
 function Translate(c)
@@ -327,12 +362,357 @@ function drawCube(c, z, cc  = 1)
     // text(`(${cx},${cy})`, c.x, c.y)
 }
 
+
+
+function drawGrid(grid)
+{
+    let pv = 0.2
+
+    function sidewalk(x, y, direction)
+    {
+        let p = Translate({ x: x, y: y })
+
+        switch(direction)
+        {
+            case "SW":
+                line(p.x - l * ( 1 - pv), p.y - 0.5 * pv * l, p.x + l * pv, p.y + 0.5 * (1 - pv) * l)
+                break;
+
+            case "NW":
+                line(p.x - l * ( 1 - pv), p.y + 0.5 * pv * l, p.x + pv * l, p.y - 0.5 * (1 - pv) * l)
+                break;
+            case "SE":
+                line(p.x - pv * l, p.y + 0.5 * (1 - pv) * l, p.x + l * (1 - pv), p.y - 0.5 * pv * l)
+                break;
+
+            case "NE":
+                line(p.x - pv * l, p.y - 0.5 * (1 - pv) * l, p.x + l * (1 - pv), p.y + 0.5 * pv * l)
+                break;
+            
+        }
+    }
+
+    function sidewalk_corner(x, y, direction)
+    {
+        let p = Translate({ x: x, y: y })
+        switch (direction)
+        {
+            case "E":
+                line(p.x + l * ( 1 - 2 * pv), p.y, p.x + l * ( 1 - pv), p.y - 0.5 * pv * l)
+                line(p.x + l * ( 1 - 2 * pv), p.y, p.x + l * ( 1 - pv), p.y + 0.5 * pv * l)
+                break;
+
+            case "W":
+                line(p.x - l * ( 1 - pv), p.y - 0.5 * pv * l, p.x - l * ( 1 - 2 * pv), p.y)
+                line(p.x - l * ( 1 - pv), p.y + 0.5 * pv * l, p.x - l * ( 1 - 2 * pv), p.y)
+                break;
+            case "S":
+                
+                line(p.x, p.y + 0.5 * l * (1 - 2 * pv), p.x + pv * l, p.y + 0.5 * (1 - pv) * l)
+                line(p.x, p.y + 0.5 * l * (1 - 2 * pv), p.x - pv * l, p.y + 0.5 * (1 - pv) * l)
+                break;
+
+            case "N":
+                line(p.x, p.y - 0.5 * l * (1 - 2 * pv), p.x + pv * l, p.y - 0.5 * (1 - pv) * l)
+                line(p.x, p.y - 0.5 * l * (1 - 2 * pv), p.x - pv * l, p.y - 0.5 * (1 - pv) * l)
+                break;
+        }
+    }
+
+    function crosswalk(x, y, direction)
+    {
+        let p = Translate({ x: x, y: y })
+        let pcw = 0.2 
+        let pc = 0.1
+
+        strokeWeight(2)
+
+        for (let i = 0; i < 6; i++)
+        {
+            let px
+            let py
+            let ox
+            let oy
+
+            switch (direction)
+            {
+                case "SE":
+
+                
+                    px = p.x - l * pc + l * pv - pcw * l
+                    py = p.y + 0.5 * (1 - pc) * l - 0.5 * l * pv - 0.5 * pcw * l
+                    ox = i / 6 * l * (1 - 2 * pv)
+                    oy = i / 6 * 0.5 * l * ( 1 - 2 * pv)
+
+                    circle(px, py, 5)
+
+                    line(
+                        px + ox,
+                        py - oy,
+                        px + ox + pcw * l,
+                        py - oy + 0.5 * pcw * l
+                    )
+                    break
+
+                case "NW":
+                    line(
+                        i / 6 * l * (1 - 2 * pv) + p.x - l * (1 - pc) + l * pv, 
+                        - i / 6 * 0.5 * l * ( 1 - 2 * pv) + p.y + 0.5 * (pc) * l - 0.5 * l * pv, 
+                        i / 6 * l * (1 - 2 * pv) + p.x - l * (1 - pc) + l * pv + pcw * l, 
+                        - i / 6 * 0.5 * l * ( 1 - 2 * pv) + p.y + 0.5 * (pc) * l - 0.5 * l * pv + 0.5 * pcw * l, 
+                    )
+                    break
+
+                case "NE":
+                    px = p.x - l * (pc) + l * pv - pcw * l
+                    py = p.y - 0.5 * (1 - pc) * l + 0.5 * l * pv + 0.5 * pcw * l
+                    ox = i / 6 * l * (1 - 2 * pv)
+                    oy = i / 6 * 0.5 * l * ( 1 - 2 * pv)
+
+                    line(
+                        px + ox, 
+                        py + oy, 
+                        px + ox + pcw * l, 
+                        py + oy - 0.5 * pcw * l, 
+                    )
+                    break
+
+                case "SW":
+                    
+                    line(
+                        i / 6 * l * (1 - 2 * pv) + p.x - l * (1 - pc) + l * pv, 
+                        i / 6 * 0.5 * l * ( 1 - 2 * pv) + p.y - 0.5 * (pc) * l + 0.5 * l * pv, 
+                        i / 6 * l * (1 - 2 * pv) + p.x - l * (1 - pc) + l * pv + pcw * l, 
+                        i / 6 * 0.5 * l * ( 1 - 2 * pv) + p.y - 0.5 * (pc) * l + 0.5 * l * pv - 0.5 * pcw * l, 
+                    )
+                    break
+                   
+               
+
+            }
+                
+                
+        }
+
+    }
+
+    for (let x = 0; x < grid.length; x++)
+    {
+        for (let y = 0; y < grid[x].length; y++)
+        {
+            let c = color("white")
+            if (typeof grid[x][y] == "object")
+            {
+                //continue
+            }
+            if (typeof grid[x][y] == "object" && grid[x][y].type == "road")
+            {
+                let p = Translate({ x: x, y: y })
+                
+                // fill(0, 20)
+                // noStroke()
+                noFill()
+                stroke(0, 40)
+                drawTile(Translate({ x: x, y: y}))
+                fill("blue")
+                stroke(0)
+                textFont("Courier New", 10)
+               // text(grid[x][y].mask, p.x, p.y)
+                // c = colors[grid[x][y].mask]
+
+                switch(grid[x][y].mask)
+                {
+                    case 40:
+                        sidewalk(x, y, "NE")
+                        sidewalk(x, y, "SW")
+                        
+                        drawingContext.setLineDash([5, 5]);
+                        line(p.x - 0.5 * l, p.y - 0.5 * (1 - 0.5) * l, p.x + l * (1 - 0.5), p.y + 0.5 * 0.5 * l)
+                        drawingContext.setLineDash([]);
+                        break;
+
+                    case 105:
+                        sidewalk(x, y, "NE")
+                        sidewalk(x, y, "SW")
+                        crosswalk(x, y, "NW")
+                        break;
+
+                    case 130:
+                        sidewalk(x, y, "NW")
+                        sidewalk(x, y, "SE")
+                        drawingContext.setLineDash([2, 4, 4, 2])
+                        line(p.x - 0.5 * l, p.y + 0.25 * l, p.x + l * (1 - 0.5), p.y - 0.25 * l)
+                        drawingContext.setLineDash([]);
+                        break;
+
+
+                    case 135:
+                        sidewalk(x, y, "NW");
+                        sidewalk(x, y, "SE");
+                        crosswalk(x, y, "NE");
+                        break;
+
+                    case 168:
+                        sidewalk(x, y, "NE")
+                        sidewalk_corner(x, y, "W")
+                        sidewalk_corner(x, y, "S")
+                        break;
+
+                    case 170:
+                        sidewalk_corner(x, y, "N")
+                        sidewalk_corner(x, y, "S")
+                        sidewalk_corner(x, y, "E")
+                        sidewalk_corner(x, y, "W")
+
+                        // line(p.x - pv * l, p.y + 0.5 * (1 - pv) * l, p.x + l * (1 - pv), p.y - 0.5 * pv * l)
+                        drawingContext.setLineDash([2, 4, 4, 2])
+                        // line(p.x - 0.5 * l, p.y - 0.5 * (1 - 0.5) * l, p.x + l * (1 - 0.5), p.y + 0.5 * 0.5 * l)
+                        // line(p.x - 0.5 * l, p.y + 0.25 * l, p.x + l * (1 - 0.5), p.y - 0.25 * l)
+                        drawingContext.setLineDash([]);
+                        break;
+
+                    case 300:
+                        sidewalk(x, y, "NE")
+                        sidewalk(x, y, "SW")
+                        crosswalk(x, y, "SE")
+                        break;
+
+
+                    case 448:
+                        sidewalk(x, y, "NW")
+                        sidewalk(x, y, "SE")
+                        crosswalk(x, y, "SW")
+                        break;
+
+
+                }
+            }
+            noFill()
+            // let c = color(colors[grid[x][y].mask])
+            // c.setAlpha(130)
+            // fill(c)
+            // drawTile(Translate({ x: x, y: y}))
+        }
+    }
+}
+
+function getTileMask(grid, x, y)
+{
+    let mask = 0
+    let f = -1
+    for (let j = -1; j < 2; j++)
+    {
+        for (let i = -1; i < 2; i++)
+        {
+            f++
+            let p = x + i
+            let q = y + j
+
+            if (p < 0 || p >= grid.length)
+            {
+                continue
+            }
+
+            if (q < 0 || q >= grid[x].length)
+            {
+                continue
+            }
+
+            if ( i==0 && j == 0)
+            {
+                continue
+            }
+
+            if (typeof grid[p][q] === "object" && grid[p][q].type == "road")
+            {
+                mask |= (1 << f)
+            }
+        }
+    }
+    
+    return mask
+}
+
+function createRoad(grid, a, b, l, d)
+{
+    for (let i = 0; i < l; i++)
+    {
+        let x = d == 0 ? a + i  : a
+        let y = d == 0 ? b : b + i
+
+        if ( x < 0 || x >= grid.length)
+        {
+            continue
+        }
+
+        if (y < 0 || y >= grid[x].length)
+        {
+            continue
+        }
+
+        let mask = getTileMask(grid, x, y)
+        let disallowed = false
+ 
+        for(let m of [11, 38, 200, 416])
+        {
+            if ((mask | m) == mask)
+            {   
+                disallowed = true;
+                break;
+            }
+        }
+
+        if (disallowed)
+        {
+            continue
+        }
+
+        grid[x][y] = { "type": "road"}
+    }
+}
+
+function analyzeGrid(grid)
+{
+    for (let x = 0; x < grid.length; x++)
+    {
+        for (let y = 0; y < grid[x].length; y++)
+        {
+            let tile = grid[x][y]
+
+            if (typeof tile !== "object")
+            {
+                continue
+            }
+
+            if (tile.type == "road")
+            {
+                tile.mask = getTileMask(grid, x, y)
+            }
+        }
+    }
+}
+
 function setup()
 {
    
-    createCanvas(500, 500)
+    o  = { x: width * 2 + width, y: height / 2 - height / 2}
 
-    o  = { x: width / 2, y: height / 2}
+    createCanvas(500, 500)
+    grid = createGrid(40, 40)
+    drawGrid(grid, 40, 40)
+    
+    for (let i = 0; i < 20; i++)
+    {
+        let a = random() * 40 | 0;
+        let b = random() * 40 | 0;
+        let c = random() * 40 
+        let d = random() * 2 | 0
+
+        createRoad(grid, min(a, b), max(a, b), c, d) 
+    }
+
+    analyzeGrid(grid)
+    drawGrid(grid)
     // ax = random() * 450 + 50
     // ay = random() * 450 + 50
     // bx = random() * 450 + 50
@@ -352,16 +732,6 @@ function setup()
     // }
 
     let cubes = []
-
-    stroke(200)
-    for (let i = -20; i < 20; i++)
-    {
-        for (let j = -20; j < 20; j++)
-        {
-            drawTile(Translate({ x: i, y: j}))
-        }
-    }
-
 
     for (let i = -20; i < 20; i++)
     {
@@ -404,11 +774,7 @@ function setup()
 
     for (let cube of cubes)
     {
-
-        drawCube(cube, cube.h, cube.c)
-        // fill("blue")
-        // text(i, Translate(cube).x, Translate(cube).y - 5)
-        // i++
+        // drawCube(cube, cube.h, cube.c)
     }
 
     
@@ -439,6 +805,7 @@ function setup()
     // }
 
 // }
+
 
 
 
